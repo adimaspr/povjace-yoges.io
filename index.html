@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iOS Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .page-trans { transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease; }
+        .app-open { transform: scale(1); opacity: 1; pointer-events: auto; }
+        .app-close { transform: scale(0.88) translateY(20px); opacity: 0; pointer-events: none; }
+        .ios-key-btn { background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+        .ios-key-btn:active { background: rgba(255, 255, 255, 0.4); }
+        .ios-dock { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px); border: 1px solid rgba(255, 255, 255, 0.15); }
+        .ios-app-icon { width: 58px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden; flex-shrink: 0; background-color: #1c1c1e; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-12px); } 40%, 80% { transform: translateX(12px); } }
+        .shake { animation: shake 0.35s ease-in-out; }
+    </style>
+</head>
+<body style="background:#0b0b0e; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:20px; overflow:hidden;">
+  <div id="phone" style="width:390px; height:844px; max-height:90vh; border-radius:48px; border:10px solid #222; overflow:hidden; position:relative; display:flex; flex-direction:column; background:black;">
+        <!-- Status Bar -->
+        <div id="status-bar" class="absolute top-0 left-0 right-0 h-11 px-7 pt-3 flex justify-between items-center z-[100] text-white text-xs font-semibold pointer-events-none transition-colors">
+            <span id="status-time">18:00</span>
+            <div class="w-24 h-4 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2 flex items-center justify-end px-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-blue-900/40 border border-blue-500/30"></div>
+            </div>
+            <div class="flex items-center space-x-1.5">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <span class="text-[10px] font-bold">5G</span>
+                <i class="fa-solid fa-battery-full text-xs"></i>
+            </div>
+        </div>
+
+        <!-- 1. LOCKSCREEN -->
+        <div id="lockscreen" class="absolute inset-0 z-30 flex flex-col justify-between pt-14 pb-8 px-6 text-white page-trans cursor-pointer select-none overflow-hidden">
+            <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover -z-10 pointer-events-none" alt="Wallpaper">
+            <div class="flex flex-col items-center mt-4">
+                <p id="lock-date" class="text-base font-medium tracking-wide text-white/90">Friday, June 5</p>
+                <h1 id="lock-time" class="text-8xl font-bold tracking-tight mt-0.5">18:00</h1>
+            </div>
+                 <div class="flex flex-col items-center space-y-8 mb-2">
+                <div class="flex items-center space-x-2 text-white/70 text-xs font-medium animate-bounce">
+                    <i class="fa-solid fa-chevron-up text-[10px]"></i>
+                    <span>Swipe up to unlock</span>
+                </div>
+                <div class="flex justify-between w-full px-2">
+                    <button class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-xl border border-white/20 flex items-center justify-center text-lg text-white shadow-lg"><i class="fa-solid fa-bolt"></i></button>
+                    <button class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-xl border border-white/20 flex items-center justify-center text-lg text-white shadow-lg"><i class="fa-solid fa-camera"></i></button>
+                </div>
+            </div>
+        </div>
+            
+
+        <!-- 2. PASSCODE SCREEN -->
+        <div id="passcode-screen" class="absolute inset-0 z-30 bg-black/80 backdrop-blur-3xl flex flex-col items-center justify-between pt-16 pb-10 px-8 text-white opacity-0 pointer-events-none page-trans">
+            <div class="flex flex-col items-center space-y-4 mt-2">
+                <i class="fa-solid fa-lock text-xl text-white/80"></i>
+                <p class="text-base font-semibold tracking-wide">Enter Passcode</p>
+                <div id="dots-container" class="flex space-x-4 pt-1">
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/60"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/60"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/60"></div>
+                    <div class="w-3.5 h-3.5 rounded-full border border-white/60"></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-5 w-full max-w-[270px] my-auto">
+                <button onclick="pressKey('1')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center text-3xl font-light mx-auto">1</button>
+                <button onclick="pressKey('2')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">2</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">ABC</span></button>
+                <button onclick="pressKey('3')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">3</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">DEF</span></button>
+                <button onclick="pressKey('4')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">4</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">GHI</span></button>
+                <button onclick="pressKey('5')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">5</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">JKL</span></button>
+                <button onclick="pressKey('6')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">6</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">MNO</span></button>
+                <button onclick="pressKey('7')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">7</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">PQRS</span></button>
+                <button onclick="pressKey('8')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">8</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">TUV</span></button>
+                <button onclick="pressKey('9')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center mx-auto"><span class="text-3xl font-light leading-none">9</span><span class="text-[9px] tracking-widest font-bold opacity-70 mt-1">WXYZ</span></button>
+                <div class="w-[70px] h-[70px]"></div>
+                <button onclick="pressKey('0')" class="w-[70px] h-[70px] rounded-full ios-key-btn flex flex-col items-center justify-center text-3xl font-light mx-auto">0</button>
+            </div>
+            <div class="flex justify-between w-full px-4 text-sm font-medium">
+                <button onclick="cancelPasscode()" class="opacity-80">Emergency</button>
+                <button id="passcode-action-btn" onclick="handlePasscodeAction()" class="opacity-80">Cancel</button>
+            </div>
+        </div>
+
+        <div id="homescreen" class="absolute inset-0 z-10 pt-12 pb-5 px-4 flex flex-col justify-between opacity-100 pointer-events-auto page-trans">
+            <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover -z-10 pointer-events-none" alt="Wallpaper">
+            <div class="absolute inset-0 bg-black/25 -z-10 pointer-events-none"></div>
+            <div>
+                <div class="grid grid-cols-2 gap-3 mt-1">
+                    <div class="bg-[#101e38]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-xs font-semibold">Amsterdam <i class="fa-solid fa-location-arrow text-[9px]"></i></p><h2 class="text-3xl font-light mt-0.5">21°</h2></div>
+                            <i class="fa-solid fa-moon text-2xl text-yellow-200"></i>
+                        </div>
+                        <div><p class="text-[11px] font-medium">Partly Cloudy</p><p class="text-[10px] text-white/70">H:27° L:17°</p></div>
+                    </div>
+                    <div class="bg-[#1c1c1e]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
+                        <div><p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">WEDNESDAY</p><h2 class="text-3xl font-bold leading-tight">28</h2></div>
+                        <div class="bg-white/10 rounded-xl p-2"><p class="text-[11px] text-white/80 font-medium">No events today</p></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 text-center text-[10px] text-white/70 font-medium mt-1 px-1"><span>Weather</span><span>Calendar</span></div>
+            </div>
+            <div class="grid grid-cols-4 gap-y-4 gap-x-2 my-auto px-1">
+                <div onclick="openApp('calendar')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCyE95EYs5falgHmbZlmzsERusGjbJxJTchpQI6cbAqed8_Bw8tahUnLo&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Calendar</span></div>
+                <div onclick="openApp('photos')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-photos-icon-svg-download-png-493155.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Photos</span></div>
+<div class="flex flex-col items-center space-y-1 opacity-40">
+    <div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgD312yGz9WSqZiq74-Ke-h12hi2ORFq2EwafhLrEj9QxJcKpOi_FwLhr_&s=10" class="w-full h-full object-cover"></div>
+    <span class="text-[11px] text-white/50 font-medium drop-shadow">Camera</span>
+</div>
+                <div onclick="openApp('notes')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Notes_%28iOS_26%29_app_icon.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Notes</span></div>
+                <div onclick="openApp('maps')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH4A3M-UdVZSljMrF4WXX8UHw2zxUoS3fKGIFwZL27Qg&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Maps</span></div>
+                <div onclick="openApp('clock')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.jim-nielsen.com/.netlify/images?url=/icongallery/ios/clock-2025-10-20/1024.png&w=1024" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Clock</span></div>
+                <div onclick="openApp('weather')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://e7.pngegg.com/pngimages/458/593/png-clipart-weather-computer-icons-ios-7-apple-weather-forecast-blue-cloud-thumbnail.png " class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Weather</span></div>
+                <div onclick="openApp('mail')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbCp8BT9iIyq86bYlwwJNFCN9v5JDRd-A4RUCPyMKUWQ&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Mail</span></div>
+                <div onclick="openApp('files')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRECvNxFKJgJel_pwpycWAfXDLiG-r_5K5OhIl_A5TFf28hz_XVwfMYE7kl&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Files</span></div>
+                <div onclick="openApp('settings')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-settings-icon-svg-download-png-493162.png?f=webp" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Settings</span></div>
+            </div>
+          <div class="flex justify-center my-1">
+    <div class="bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full flex items-center space-x-1.5 text-white/90 text-xs shadow-sm">
+        <i class="fa-solid fa-magnifying-glass text-[10px]"></i><span>Search</span>
+    </div>
+</div>
+
+<div class="ios-dock rounded-[30px] p-2.5 grid grid-cols-4 gap-2 items-center">
+    <!-- PHONE - INI YANG TADI HILANG -->
+    <div onclick="openApp('phone')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
+        <img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-phone-icon-svg-download-png-493154.png?f=webp" class="w-full h-full object-cover">
+    </div>
+    
+    <!-- IMESSAGE - lu udah ada -->
+    <div onclick="openApp('imessage')" class="relative ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
+        <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/IMessage_logo.svg/3840px-IMessage_logo.svg.png" class="w-full h-full object-cover">
+    </div>
+    
+    <!-- SAFARI -->
+    <div onclick="openApp('safari')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEoxJb34f-BtWYeSut-ZJ-r_NRzW-D-U4GcdY1eX5_rg&s=10" class="w-full h-full object-cover">
+    </div>
+    
+    <!-- CAMERA / MUSIC -->
+    <div onclick="openApp('music')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhY77aDC6ZGpbFFlXo8lDkO99_-fMD8UdjL4VkkAfDOQ&s=10" class="w-full h-full object-cover">
+    </div>
+</div>
+<div id="app-phone" class="absolute inset-0 z-[30] bg-[#fbfbfd] hidden flex-col page-trans app-close overflow-hidden">
+    <!-- HEADER FIX DI ATAS -->
+    <div class="pt-12 px-5 pb-3 bg-[#fbfbfd]/90 backdrop-blur-xl z-10 flex-shrink-0">
+        <div class="flex justify-between items-center">
+            <button onclick="goHome()" class="text-[#007aff] text-[17px]"><i class="fa-solid fa-chevron-left text-[13px] mr-1"></i></button>
+            <div class="flex space-x-4 text-[#007aff] text-[18px]"><i class="fa-solid fa-ellipsis"></i></div>
+        </div>
+        <h1 class="text-[34px] font-bold text-black mt-3 tracking-tight">Phone</h1>
+        <div class="mt-3 h-9 bg-[#e8e8ed] rounded-[10px] flex items-center px-3 text-black/40 text-[15px]">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-[12px]"></i> Search
+        </div>
+    </div>
+
+    <!-- INI YANG BISA DI SCROLL - FAVORITES + RECENTS JADI SATU -->
+    <div class="flex-1 overflow-y-auto bg-[#fbfbfd]">
+        <div class="px-5 mt-4">
+            <p class="text-[13px] font-semibold text-black/40 uppercase tracking-wider mb-3">FAVORITES</p>
+            <div class="flex space-x-5 pb-2">
+                <div class="flex flex-col items-center">
+                    <div class="w-[60px] h-[60px] rounded-full bg-black flex items-center justify-center text-white text-[22px] font-bold">Y</div>
+                    <p class="text-[11px] mt-1.5 font-medium">Yogeswara</p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#5e5ce6] to-[#2c2c9a] flex items-center justify-center text-white text-[22px] font-semibold">P</div>
+                    <p class="text-[11px] mt-1.5 font-medium">Papa</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(0,0,0,0.04)] min-h-[400px]">
+            <div class="px-5 pt-4 pb-2 flex justify-between"><p class="text-[13px] font-semibold text-black/40 uppercase">RECENTS</p><p class="text-[13px] text-[#007aff]">Clear</p></div>
+            <div class="divide-y divide-black/[0.06]">
+                <div class="px-5 py-3.5 flex items-center justify-between"><div class="flex items-center space-x-3.5"><div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div><div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">Today • 23m</p></div></div><div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div></div>
+                <div class="px-5 py-3.5 flex items-center justify-between"><div class="flex items-center space-x-3.5"><div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div><div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">Yesterday • 12m</p></div></div><div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div></div>
+                <div class="px-5 py-3.5 flex items-center justify-between"><div class="flex items-center space-x-3.5"><div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div><div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">21/06/26 • 45m</p></div></div><div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div></div>
+                <div class="px-5 py-3.5 flex items-center justify-between"><div class="flex items-center space-x-3.5"><div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div><div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">19/06/26 • 12m</p></div></div><div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div></div>
+                <div class="px-5 py-3.5 flex items-center justify-between"><div class="flex items-center space-x-3.5"><div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div><div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">18/06/26 • 10m</p></div></div><div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM BAR FIX DI BAWAH - GAK IKUT KE SCROLL -->
+    <div class="h-[88px] bg-white/80 backdrop-blur-2xl border-t border-black/5 flex justify-around items-start pt-3 pb-7 flex-shrink-0">
+        <div class="flex flex-col items-center text-[#007aff]"><i class="fa-solid fa-star text-[22px]"></i><span class="text-[10px] mt-1 font-medium">Favorites</span></div>
+        <div class="flex flex-col items-center text-[#007aff]"><i class="fa-solid fa-clock text-[22px]"></i><span class="text-[10px] mt-0.5 font-semibold">Recents</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-address-book text-[22px]"></i><span class="text-[10px] mt-1">Contacts</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-keypad text-[22px]"></i><span class="text-[10px] mt-1">Keypad</span></div>
+    </div>
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black rounded-full z-50"></div>
+</div>
+        <!-- APP: CALENDAR -->
+      <div id="app-calendar" class="absolute inset-0 z-20 bg-[#f2f2f7] hidden flex-col page-trans app-close">
+    <div class="pt-12 px-5 pb-3 bg-[#f2f2f7]/80 backdrop-blur-xl border-b border-black/10">
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center space-x-3">
+                <!-- TOMBOL KEMBALI NYA DI SINI -->
+                <button onclick="goHome()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <div class="flex flex-col"><span id="cal-year" class="text-[13px] font-bold text-[#ff3b30] uppercase tracking-wide">2026</span><h1 id="cal-month" class="text-[32px] font-bold leading-none tracking-tight text-black">October</h1></div>
+            </div>
+            <div class="flex space-x-3"><button onclick="changeMonth(-1)" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90"><i class="fa-solid fa-chevron-left text-xs"></i></button><button onclick="changeMonth(1)" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90"><i class="fa-solid fa-chevron-right text-xs"></i></button></div>
+        </div>
+        <div class="grid grid-cols-7 mt-6 text-[11px] text-center font-medium text-black/40"><div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div></div>
+    </div>
+    <div id="cal-grid" class="grid grid-cols-7 gap-y-1 px-2 py-3 bg-white"></div>
+    <div class="flex-1 bg-[#f2f2f7] p-4">
+        <div class="bg-white rounded-[12px] p-4 shadow-sm"><p class="text-[11px] font-bold text-black/40 uppercase">Today</p><div class="mt-3 flex space-x-3 items-start"><div class="w-1.5 h-12 bg-[#ff3b30] rounded-full"></div><div><p class="text-[15px] font-semibold text-black">No events today</p><p id="cal-today-detail" class="text-[13px] text-black/50"></p></div></div></div>
+        <button onclick="goToday()" class="mt-4 text-[#007aff] text-[14px] font-medium">Go to Today</button>
+    </div>
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+
+<div id="app-photos" class="absolute inset-0 z-20 bg-white hidden flex-col page-trans app-close overflow-hidden">
+    <div id="photos-library-view" class="flex flex-col flex-1 overflow-hidden">
+        <div class="pt-11 px-4 pb-2 flex justify-between items-center bg-white/90 backdrop-blur-xl sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <!-- TOMBOL KEMBALI -->
+                <button onclick="goHome()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <div class="flex flex-col">
+                    <h1 class="text-[28px] font-bold leading-none text-black">Library</h1>
+                    <p class="text-[13px] text-black/50 mt-1"><i class="fa-solid fa-cloud-arrow-up text-[10px]"></i> Syncing 17 Items...</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center"><i class="fa-solid fa-ellipsis-h text-xs"></i></button>
+                <button class="px-3 py-1.5 rounded-full bg-black/10 text-[12px] font-semibold">Select</button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto bg-white p-[1px]">
+            <div class="grid grid-cols-3 gap-[2px]">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/76/c6/87/76c68702eb30657839eaa4306ffe4884.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/1200x/0d/ef/02/0def02985dcd085428cff00cb817c182.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/42/c1/40/42c140391ceea7e818c5eee35b745c82.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/c1/85/a8/c185a80837b22e594654f2fd9d23896d.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/44/e2/27/44e22763a93a65a2ea8847be3dbd4ff4.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/1200x/3b/c5/2d/3bc52dbf6569f72bcb920b3404b3aeef.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/1200x/51/5e/00/515e004f9cce30b348afc265e39c2f0d.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/81/73/64/81736413c972128b2ddea79496d5eb55.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/05/7f/2c/057f2ca9a0ff8e973c1273bdbf4cd1aa.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/51/b8/cc/51b8cc54f9a9080f6b8a6a606a716ce7.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/06/eb/bc/06ebbc33a43842f94e8ff4fbb4fc729b.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/76/a4/17/76a417bad9d94d61ee7c7ebcb5ac9e17.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/1200x/1e/01/3d/1e013d81cfcccb084dc1469a89b7c5e6.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/54/6c/eb/546cebbc029ce2d4c49f0b956324fac2.jpg" class="w-full h-[125px] object-cover">
+                <img onclick="openPhoto(this.src)" src="https://i.pinimg.com/736x/29/b0/ec/29b0ecf93f866924e076d52444dd7f5a.jpg" class="w-full h-[125px] object-cover">
+            </div>
+        </div>
+    </div>
+
+    <div id="photos-collections-view" class="hidden flex-col flex-1 overflow-hidden bg-[#f5f5f7]">
+        <div class="pt-11 px-4 pb-2 flex justify-between items-center bg-[#f5f5f7] sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <!-- TOMBOL KEMBALI -->
+                <button onclick="goHome()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <h1 class="text-[28px] font-bold leading-none text-black">Collections</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center"><i class="fa-solid fa-ellipsis-h text-xs"></i></div>
+                <img src="https://i.pinimg.com/736x/e3/01/ca/e301ca61316a8793d077b4a74d5db7b8.jpg" class="w-7 h-7 rounded-full">
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
+            <div><div class="flex justify-between items-center"><h2 class="text-[18px] font-bold text-black">Memories</h2><i class="fa-solid fa-chevron-right text-xs text-black/30"></i></div></div>
+            <div>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-[18px] font-bold text-black">Pinned <i class="fa-solid fa-chevron-right text-[11px]"></i></h2>
+                    <div class="flex items-center space-x-2"><button class="px-3 py-1 rounded-full bg-white text-[12px] font-semibold text-[#007aff] shadow">Edit</button><i class="fa-solid fa-chevron-down text-[10px] text-black/30"></i></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div class="relative rounded-xl overflow-hidden h-[95px]"><img src="https://i.pinimg.com/736x/d3/74/25/d374256f9bcd2d16735bcee3b71f5b24.jpg" class="w-full h-full object-cover"><div class="absolute bottom-1 left-2 flex items-center space-x-1 text-white text-[11px] font-semibold drop-shadow"><i class="fa-solid fa-heart text-[9px]"></i><span>Favorites</span></div></div>
+                    <div class="relative rounded-xl overflow-hidden h-[95px]"><img src="https://i.pinimg.com/1200x/2f/02/f9/2f02f9cbc780c13652ce278ba83eec51.jpg" class="w-full h-full object-cover"><div class="absolute bottom-1 left-1 text-white text-[9px] font-semibold drop-shadow">Recently Saved</div></div>
+                    <div class="relative rounded-xl overflow-hidden h-[95px]"><img src="https://i.pinimg.com/736x/49/ea/f2/49eaf2855bee315a1ab4e2a02a3f26cc.jpg" class="w-full h-full object-cover"><div class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Videos</div></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center"><h2 class="text-[18px] font-bold text-black">People & Pets <i class="fa-solid fa-chevron-right text-[11px]"></i></h2><i class="fa-solid fa-chevron-down text-[10px] text-black/30"></i></div>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/736x/08/c3/ce/08c3ce1dcb1b35c9c909a38d79b0d2c7.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Jace </span></div>
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/736x/20/fa/42/20fa42814988311ad53ddbe6fc4ed9b8.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Joya</span></div>
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/736x/80/5f/08/805f08a93cbd182c6da7bb106400a86c.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Coertis</span></div>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-[18px] font-bold text-black">Albums <i class="fa-solid fa-chevron-right text-[11px]"></i></h2>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/1200x/cf/b6/dd/cfb6dda914984d144b897b501a11adf0.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Yogeswara</span></div>
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/736x/9a/51/24/9a512416f45b497e06fe95287c897968.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Screenshots</span></div>
+                    <div class="rounded-xl overflow-hidden h-[95px] relative"><img src="https://i.pinimg.com/1200x/4f/2d/d6/4f2dd6747f154a195dab4172b3ba22ec.jpg" class="w-full h-full object-cover"><span class="absolute bottom-1 left-2 text-white text-[11px] font-semibold drop-shadow">Ui/Ux</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="h-[85px] bg-white/90 backdrop-blur-xl border-t border-black/10 flex justify-around items-start pt-2 pb-6 px-6">
+        <button onclick="switchPhotosTab('library')" id="tab-library" class="flex flex-col items-center bg-black/10 px-4 py-1.5 rounded-full"><i class="fa-solid fa-photo-film text-[16px] text-[#007aff]"></i><span class="text-[10px] font-medium mt-1 text-[#007aff]">Library</span></button>
+        <button onclick="switchPhotosTab('collections')" id="tab-collections" class="flex flex-col items-center opacity-60 px-4 py-1.5"><i class="fa-solid fa-images text-[16px]"></i><span class="text-[10px] font-medium mt-1">Collections</span></button>
+        <div class="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center ml-auto"><i class="fa-solid fa-magnifying-glass text-sm"></i></div>
+    </div>
+
+    <div id="photo-detail" class="absolute inset-0 z-30 bg-black hidden flex-col">
+        <div class="pt-11 px-4 h-12 flex justify-between items-center text-white"><button onclick="closePhoto()" class="text-[16px]"><i class="fa-solid fa-chevron-left"></i></button><div class="flex space-x-4"><i class="fa-solid fa-arrow-up-from-bracket"></i><i class="fa-regular fa-trash-can"></i></div></div>
+        <img id="photo-detail-img" src="" class="flex-1 object-contain w-full">
+    </div>
+    
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+<div id="app-notes" class="absolute inset-0 z-20 bg-white hidden flex-col page-trans app-close overflow-hidden">
+    <!-- LIST VIEW -->
+    <div id="notes-list-view" class="absolute inset-0 flex flex-col bg-white">
+        
+        <div class="pt-10 px-5">
+            <div class="flex justify-between items-center">
+                <button onclick="goHome()" class="text-[#007AFF] text-[17px]"><i class="fa-solid fa-chevron-left text-[12px]"></i> Home</button>
+                <div class="w-10 h-10 rounded-full shadow-md border bg-white flex items-center justify-center">
+                    <div class="w-6 h-4 flex flex-col justify-between"><div class="h-1.5 bg-yellow-400 w-full rounded-sm"></div><div class="h-0.5 bg-black/20 w-full"></div><div class="h-0.5 bg-black/20 w-full"></div><div class="h-0.5 bg-black/20 w-full"></div></div>
+                </div>
+            </div>
+            <h1 class="text-[32px] font-bold text-black mt-6 mb-4">Notes</h1>
+            <div class="w-full h-10 bg-[#F2F2F7] rounded-xl flex items-center px-3 text-black/40 text-[15px]"><i class="fa-solid fa-magnifying-glass mr-2 text-[12px]"></i> Search Notes</div>
+        </div>
+        <div id="my-notes-list" class="flex-1 mt-4 overflow-y-auto"></div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="notes-detail-view" class="absolute inset-0 hidden flex-col bg-white z-10">
+        <div class="pt-10 px-5 flex-1 flex flex-col overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <button onclick="closeNote()" class="text-[#007AFF] text-[17px]"><i class="fa-solid fa-chevron-left text-[12px]"></i> Home</button>
+            </div>
+            <button onclick="closeNote()" class="text-left text-[#FFCC00] text-[16px] mt-6 mb-2"><i class="fa-solid fa-chevron-left text-[12px]"></i> Notes</button>
+            <h1 id="detail-title" class="text-[26px] font-bold leading-tight text-black"></h1>
+            <p id="detail-body" class="mt-4 text-[15px] leading-[23px] text-black/80 whitespace-pre-wrap"></p>
+        </div>
+        <div class="absolute bottom-6 right-6 text-black/20"><i class="fa-solid fa-pencil"></i></div>
+        <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full"></div>
+    </div>
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50"></div>
+</div>
+
+<div id="app-maps" class="absolute inset-0 z-20 bg-[#f2f2f7] hidden flex-col page-trans app-close overflow-hidden">
+    <!-- MAP VIEW -->
+    <div class="absolute inset-0">
+        <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d77979.6943131118!2d4.833921343359374!3d52.3749818!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47c63fb5949a7755%3A0x6600fd4d28b1d!2sAmsterdam%2C%20Netherlands!5e0!3m2!1sen!2sid!4v1710000000000" 
+            class="w-full h-full border-0"
+            loading="lazy">
+        </iframe>
+        
+        <!-- overlay gradient atas -->
+        <div class="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-white/80 to-transparent pointer-events-none"></div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="absolute top-0 left-0 right-0 pt-11 px-4 pb-3 flex justify-between items-center z-10">
+        <button onclick="goHome()" class="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center active:scale-90">
+            <i class="fa-solid fa-chevron-left text-[12px] text-black"></i>
+        </button>
+        <div class="flex-1 mx-3 h-9 bg-white rounded-full shadow-md flex items-center px-4 text-[14px] text-black/50">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-[11px]"></i> Amsterdam
+        </div>
+        <div class="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center">
+            <i class="fa-solid fa-location-crosshairs text-[12px] text-[#007aff]"></i>
+        </div>
+    </div>
+
+    <!-- BOTTOM SHEET ALA IOS MAPS -->
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(0,0,0,0.15)] p-5 pb-8 z-10">
+        <div class="w-9 h-1 bg-black/20 rounded-full mx-auto mb-4"></div>
+        
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-[22px] font-bold leading-tight text-black">Amsterdam</h1>
+                <p class="text-[13px] text-black/50 mt-1">Netherlands • 52.3676° N, 4.9041° E</p>
+                <div class="mt-3 flex items-center space-x-2">
+                    <span class="px-2.5 py-1 bg-[#007aff]/10 text-[#007aff] rounded-full text-[11px] font-semibold"><i class="fa-solid fa-location-dot mr-1"></i> My Favorite Place</span>
+                    <span class="px-2.5 py-1 bg-[#34c759]/10 text-[#34c759] rounded-full text-[11px] font-semibold">21° Partly Cloudy</span>
+                </div>
+            </div>
+            <img src="https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=200" class="w-16 h-16 rounded-xl object-cover">
+        </div>
+
+        <div class="mt-5 grid grid-cols-3 gap-2">
+            <button class="bg-[#007aff] text-white rounded-xl py-3 text-[13px] font-semibold flex flex-col items-center justify-center"><i class="fa-solid fa-diamond-turn-right mb-1"></i>Directions</button>
+            <button class="bg-[#f2f2f7] text-black rounded-xl py-3 text-[13px] font-semibold flex flex-col items-center justify-center"><i class="fa-solid fa-heart mb-1 text-[#ff3b30]"></i>Favorite</button>
+            <button class="bg-[#f2f2f7] text-black rounded-xl py-3 text-[13px] font-semibold flex flex-col items-center justify-center"><i class="fa-solid fa-share mb-1"></i>Share</button>
+        </div>
+
+        <div class="mt-4 bg-[#f2f2f7] rounded-xl p-3 flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-quote-left text-[12px] text-black/40"></i></div>
+            <p class="text-[12px] leading-[16px] text-black/70">"Partly cloudy in Amsterdam. A place I want to go with Yogeswara someday."</p>
+        </div>
+
+        <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full cursor-pointer"></div>
+    </div>
+</div>
+<div id="app-clock" class="absolute inset-0 z-20 bg-black hidden flex-col page-trans app-close overflow-hidden">
+    <!-- header -->
+    <div class="pt-12 px-5 pb-2 flex justify-between items-center">
+        <button onclick="goHome()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90">
+            <i class="fa-solid fa-chevron-left text-xs text-white"></i>
+        </button>
+        <h1 class="text-[17px] font-semibold text-white">World Clock</h1>
+        <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+            <i class="fa-solid fa-plus text-xs text-white"></i>
+        </button>
+    </div>
+
+    <!-- tab -->
+    <div class="px-5 mt-3">
+        <div class="flex space-x-6 text-[13px] border-b border-white/10 pb-2">
+            <span class="text-white font-semibold border-b-2 border-[#ff9500] pb-2 -mb-2.5">World Clock</span>
+            <span class="text-white/40">Alarm</span>
+            <span class="text-white/40">Stopwatch</span>
+            <span class="text-white/40">Timer</span>
+        </div>
+    </div>
+
+    <!-- list jam -->
+    <div class="flex-1 overflow-y-auto px-5 mt-4 space-y-6">
+        <!-- jam utama - gede -->
+        <div class="flex flex-col items-center mt-6">
+            <p id="clock-big-time" class="text-[64px] font-extralight tracking-tight text-white leading-none">18:00</p>
+            <p id="clock-big-date" class="text-[14px] text-white/50 mt-2">Wednesday, 28 October</p>
+            <div class="w-48 h-48 rounded-full border-[3px] border-white/10 mt-6 relative flex items-center justify-center">
+                <div class="absolute w-1 h-20 bg-white origin-bottom bottom-1/2 left-1/2 -translate-x-1/2 rotate-0" id="clock-hour"></div>
+                <div class="absolute w-0.5 h-24 bg-white/80 origin-bottom bottom-1/2 left-1/2 -translate-x-1/2 rotate-45" id="clock-min"></div>
+                <div class="absolute w-2 h-2 bg-[#ff3b30] rounded-full"></div>
+                <!-- angka -->
+                <span class="absolute top-2 text-[10px] text-white/30">12</span>
+                <span class="absolute bottom-2 text-[10px] text-white/30">6</span>
+                <span class="absolute left-2 text-[10px] text-white/30">9</span>
+                <span class="absolute right-2 text-[10px] text-white/30">3</span>
+            </div>
+        </div>
+
+        <!-- world clock list -->
+        <div class="mt-8 space-y-1">
+            <div class="flex justify-between items-center py-3 border-b border-white/10">
+                <div>
+                    <p class="text-[13px] text-white/40">Today, +5H</p>
+                    <p class="text-[18px] text-white font-normal">Amsterdam</p>
+                </div>
+                <p id="clock-ams" class="text-[28px] font-light text-white">23:00</p>
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-white/10">
+                <div>
+                    <p class="text-[13px] text-white/40">Today</p>
+                    <p class="text-[18px] text-white font-normal">Panti</p>
+                </div>
+                <p id="clock-panti" class="text-[28px] font-light text-white">18:00</p>
+            </div>
+            <div class="flex justify-between items-center py-3 border-b border-white/10">
+                <div>
+                    <p class="text-[13px] text-white/40">Today</p>
+                    <p class="text-[18px] text-white font-normal">Yogeswara's Time</p>
+                </div>
+                <p id="clock-yoges" class="text-[28px] font-light text-white flex items-center">18:00 <span class="w-2 h-2 bg-[#34c759] rounded-full ml-2"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+<div id="app-weather" class="absolute inset-0 z-20 bg-[#0a1a3a] hidden flex-col page-trans app-close overflow-hidden">
+    <!-- background gradient ala malam -->
+    <div class="absolute inset-0 bg-gradient-to-b from-[#101e38] via-[#0a1a3a] to-[#1a2a5a]"></div>
+    <div class="absolute inset-0 opacity-40" style="background: radial-gradient(2px 2px at 20% 30%, white, transparent), radial-gradient(2px 2px at 40% 70%, white, transparent), radial-gradient(1px 1px at 90% 40%, white, transparent);"></div>
+
+    <!-- top -->
+    <div class="relative z-10 pt-11 px-5">
+        <div class="flex justify-between items-center">
+            <button onclick="goHome()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90">
+                <i class="fa-solid fa-chevron-left text-xs text-white"></i>
+            </button>
+            <div class="flex space-x-2">
+                <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-ellipsis-h text-xs text-white"></i></div>
+                <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-list text-xs text-white"></i></div>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center mt-6 text-white">
+            <h1 class="text-[32px] font-semibold tracking-tight">Amsterdam</h1>
+            <p class="text-[90px] font-extralight leading-none -mt-2 -mb-2 tracking-tighter" id="weather-temp">21°</p>
+            <p class="text-[18px] font-medium text-white/80">Partly Cloudy</p>
+            <p class="text-[14px] font-medium mt-1">H:27° L:17°</p>
+        </div>
+
+        <!-- card hourly -->
+        <div class="mt-6 bg-white/10 backdrop-blur-xl rounded-[20px] border border-white/10 p-4">
+            <p class="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Partly cloudy conditions from 8PM-9PM, with showers expected at 9PM.</p>
+            <div class="h-[1px] bg-white/10 my-3"></div>
+            <div class="flex justify-between overflow-x-auto space-x-5 scrollbar-none">
+                <div class="flex flex-col items-center space-y-2"><span class="text-[12px] text-white/50">Now</span><i class="fa-solid fa-moon text-yellow-200"></i><span class="text-[15px] font-semibold text-white">21°</span></div>
+                <div class="flex flex-col items-center space-y-2"><span class="text-[12px] text-white/50">9 PM</span><i class="fa-solid fa-cloud-moon-rain text-white/70"></i><span class="text-[15px] font-semibold text-white">20°</span></div>
+                <div class="flex flex-col items-center space-y-2"><span class="text-[12px] text-white/50">10 PM</span><i class="fa-solid fa-cloud text-white/60"></i><span class="text-[15px] font-semibold text-white">19°</span></div>
+                <div class="flex flex-col items-center space-y-2"><span class="text-[12px] text-white/50">11 PM</span><i class="fa-solid fa-moon text-yellow-200"></i><span class="text-[15px] font-semibold text-white">18°</span></div>
+                <div class="flex flex-col items-center space-y-2"><span class="text-[12px] text-white/50">12 AM</span><i class="fa-solid fa-moon text-yellow-200"></i><span class="text-[15px] font-semibold text-white">17°</span></div>
+            </div>
+        </div>
+
+        <!-- 10 day + air quality -->
+        <div class="mt-3 grid grid-cols-2 gap-3">
+            <div class="bg-white/10 backdrop-blur-xl rounded-[20px] border border-white/10 p-4">
+                <p class="text-[11px] font-bold text-white/40 uppercase"><i class="fa-solid fa-calendar mr-1"></i> 10-DAY FORECAST</p>
+                <div class="mt-3 space-y-3 text-[13px] text-white">
+                    <div class="flex justify-between"><span>Today</span><i class="fa-solid fa-cloud-sun text-yellow-200/80"></i><span>17°  27°</span></div>
+                    <div class="flex justify-between"><span>Thu</span><i class="fa-solid fa-cloud-rain"></i><span>16°  22°</span></div>
+                    <div class="flex justify-between"><span>Fri</span><i class="fa-solid fa-cloud-sun"></i><span>15°  21°</span></div>
+                </div>
+            </div>
+            <div class="bg-white/10 backdrop-blur-xl rounded-[20px] border border-white/10 p-4 flex flex-col">
+                <p class="text-[11px] font-bold text-white/40 uppercase"><i class="fa-solid fa-wind mr-1"></i> AIR QUALITY</p>
+                <p class="text-[20px] font-semibold text-white mt-2">42 - Good</p>
+                <div class="mt-auto h-1.5 w-full bg-white/20 rounded-full overflow-hidden"><div class="h-full w-[35%] bg-[#34c759]"></div></div>
+                <p class="text-[10px] text-white/50 mt-2">Air quality is satisfactory in Amsterdam.</p>
+            </div>
+        </div>
+
+        <!-- quotes bawah -->
+        <div class="mt-3 bg-white/10 backdrop-blur-xl rounded-[20px] border border-white/10 p-4 flex items-start space-x-3">
+            <i class="fa-solid fa-location-dot text-white/60 mt-0.5"></i>
+            <div>
+                <p class="text-[12px] font-semibold text-white">Amsterdam, Netherlands</p>
+                <p class="text-[11px] text-white/50 leading-[14px] mt-1">For Yogeswara — I hope you can feel the cold breeze of Amsterdam even from here. One day we'll go together.</p>
+            </div>
+        </div>
+    </div>
+
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+<div id="app-mail" class="absolute inset-0 z-20 bg-[#f2f2f7] hidden flex-col page-trans app-close overflow-hidden">
+    <!-- header iOS -->
+    <div class="pt-11 px-4 pb-3 bg-[#f2f2f7]/80 backdrop-blur-xl border-b border-black/10">
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center space-x-3">
+                <button onclick="goHome()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <h1 class="text-[28px] font-bold leading-none text-black">Inbox</h1>
+            </div>
+            <button class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center">
+                <i class="fa-solid fa-ellipsis-h text-xs"></i>
+            </button>
+        </div>
+        <div class="mt-4 h-9 bg-[#e5e5ea] rounded-[10px] flex items-center px-3 text-black/40 text-[14px]">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-[11px]"></i> Search
+        </div>
+        <p class="text-[12px] text-black/40 mt-2 font-medium">2 Unread • Updated Just Now</p>
+    </div>
+
+    <!-- list mail iOS style -->
+    <div class="flex-1 overflow-y-auto bg-white">
+        <!-- item -->
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 active:bg-black/5">
+            <div class="w-10 h-10 rounded-full bg-[#8e8e93] flex items-center justify-center text-white flex-shrink-0"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-semibold text-[15px] text-black">Telegram</p><p class="text-[12px] text-black/40">Oct 17</p></div>
+                <p class="text-[13px] text-black font-medium truncate">Your Code - 38987</p>
+                <p class="text-[13px] text-black/50 truncate">Dear , Your code is: 38987. Use it to...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 active:bg-black/5">
+            <div class="w-10 h-10 rounded-full bg-[#007aff] flex items-center justify-center text-white font-bold flex-shrink-0">M</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-semibold text-[15px] text-black">Microsoft account team</p><span class="w-2 h-2 bg-[#007aff] rounded-full mt-1.5 ml-2 flex-shrink-0"></span><p class="text-[12px] text-black/40 ml-auto">Oct 17</p></div>
+                <p class="text-[13px] text-black font-medium truncate">Your single-use code</p>
+                <p class="text-[13px] text-black/50 truncate">Hi l*********@gmail.com, We received you...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 bg-[#f2f8ff]">
+            <div class="w-10 h-10 rounded-full bg-[#ffcc00] flex items-center justify-center text-white font-bold flex-shrink-0">G</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-bold text-[15px] text-black">Google</p><p class="text-[12px] font-bold text-black">Oct 16</p></div>
+                <p class="text-[13px] text-black font-bold truncate">Notifikasi keamanan</p>
+                <p class="text-[13px] text-black/60 truncate">Login baru di Windows l*********@gmail.c...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 bg-[#f2f8ff]">
+            <div class="w-10 h-10 rounded-full bg-[#e60023] flex items-center justify-center text-white flex-shrink-0"><i class="fa-brands fa-pinterest text-xl"></i></div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-bold text-[15px] text-black">Pinterest</p><p class="text-[12px] font-bold text-black">Oct 16</p></div>
+                <p class="text-[13px] text-black font-bold truncate">Peringatan keamanan akun Pinterest: Apakah...</p>
+                <p class="text-[13px] text-black/60 truncate">Perangkat baru masuk ke akun Pinterest Anda Ka...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3">
+            <div class="w-10 h-10 rounded-full bg-[#007aff] flex items-center justify-center text-white font-bold flex-shrink-0">M</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-semibold text-[15px] text-black">Microsoft account team</p><p class="text-[12px] text-black/40">Oct 16</p></div>
+                <p class="text-[13px] text-black font-medium truncate">Your single-use code</p>
+                <p class="text-[13px] text-black/50 truncate">Hi l*********@gmail.com, We received you...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3">
+            <div class="w-10 h-10 rounded-full bg-[#8e8e93] flex items-center justify-center text-white flex-shrink-0"><i class="fa-solid fa-user"></i></div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-semibold text-[15px] text-black">Microsoft account team</p><p class="text-[12px] text-black/40">Oct 16</p></div>
+                <p class="text-[13px] text-black truncate">Verify your email address</p>
+                <div class="mt-2 inline-block px-4 py-1.5 bg-[#dbeafe] rounded-full text-[13px] font-medium text-black">Copy code: 800680</div>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3">
+            <div class="w-10 h-10 rounded-full bg-[#ec4899] flex items-center justify-center text-white flex-shrink-0">G</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-semibold text-[15px] text-black">GitHub</p><p class="text-[12px] text-black/40">Oct 16</p></div>
+                <p class="text-[13px] text-black font-medium truncate">[GitHub] Please verify your device</p>
+                <p class="text-[13px] text-black/50 truncate">Hey lutfiyaika! A sign in attempt requires further v...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 bg-[#f2f8ff]">
+            <div class="w-10 h-10 rounded-full bg-[#ffcc00] flex items-center justify-center text-white font-bold flex-shrink-0">G</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-bold text-[15px] text-black">Google</p><p class="text-[12px] font-bold text-black">Oct 15</p></div>
+                <p class="text-[13px] text-black font-bold truncate">Notifikasi keamanan</p>
+                <p class="text-[13px] text-black/60 truncate">Login baru di Windows l*********@gmail.c...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+
+        <div class="px-4 py-3.5 border-b border-black/10 flex space-x-3 bg-[#f2f8ff]">
+            <div class="w-10 h-10 rounded-full bg-[#a5b4fc] flex items-center justify-center text-white flex-shrink-0">G</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between"><p class="font-bold text-[15px] text-black">Google</p><p class="text-[12px] font-bold text-black">Oct 15</p></div>
+                <p class="text-[13px] text-black font-bold truncate leading-tight">Kamu membagikan beberapa data Akun Goo...</p>
+                <p class="text-[13px] text-black/60 truncate">Pantau data Akun Google-mu lutfiyaikaningrum...</p>
+            </div>
+            <i class="fa-regular fa-star text-black/20 mt-1"></i>
+        </div>
+    </div>
+
+    <!-- compose button ala iOS -->
+    <div class="absolute bottom-20 right-5 w-12 h-12 bg-[#007aff] rounded-full shadow-lg flex items-center justify-center active:scale-90">
+        <i class="fa-solid fa-pen text-white"></i>
+    </div>
+
+    <!-- bottom nav iOS mail -->
+    <div class="h-[85px] bg-[#f2f2f7]/90 backdrop-blur-xl border-t border-black/10 flex justify-between items-center px-8 pb-6 text-[#007aff]">
+        <i class="fa-solid fa-trash-can text-[18px] opacity-50"></i>
+        <i class="fa-solid fa-folder text-[18px] opacity-50"></i>
+        <i class="fa-solid fa-box-archive text-[18px] opacity-50"></i>
+        <i class="fa-solid fa-reply text-[18px]"></i>
+    </div>
+    
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+<div id="app-files" class="absolute inset-0 z-20 bg-[#f2f2f7] hidden flex-col page-trans app-close overflow-hidden">
+    <!-- header -->
+    <div class="pt-11 px-4 pb-2 bg-[#f2f2f7]/90 backdrop-blur-xl border-b border-black/10">
+        <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center space-x-2">
+                <button onclick="goHome()" class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center active:scale-90">
+                    <i class="fa-solid fa-chevron-left text-[11px]"></i>
+                </button>
+                <h1 class="text-[28px] font-bold text-black">Browse</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center"><i class="fa-solid fa-ellipsis-h text-[11px]"></i></div>
+                <img src="image.png" class="w-8 h-8 rounded-full">
+            </div>
+        </div>
+        <div class="mt-3 h-9 bg-[#e5e5ea] rounded-[10px] flex items-center px-3 text-black/40 text-[14px]">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-[11px]"></i> Search
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+        <!-- Favorites -->
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-[20px] font-bold text-black">Favorites</h2>
+                <i class="fa-solid fa-chevron-right text-[11px] text-black/30"></i>
+            </div>
+            <div class="bg-white rounded-[14px] overflow-hidden shadow-sm divide-y divide-black/5">
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5">
+                    <div class="w-9 h-9 rounded-lg bg-[#007aff] flex items-center justify-center text-white"><i class="fa-solid fa-clock"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">Recents</p></div>
+                    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5">
+                    <div class="w-9 h-9 rounded-lg bg-[#34c759] flex items-center justify-center text-white"><i class="fa-solid fa-star"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">Yogeswara's Folder</p></div>
+                    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations / Tugas -->
+        <div>
+            <h2 class="text-[20px] font-bold text-black mb-2">Tugas Sekolah</h2>
+            <div class="bg-white rounded-[14px] overflow-hidden shadow-sm divide-y divide-black/5">
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5" onclick="openFolder('bin')">
+                    <div class="w-9 h-9 rounded-lg bg-[#ff3b30] flex items-center justify-center text-white"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">BIN - Bahasa Indonesia</p><p class="text-[12px] text-black/40">3 files, 2.4 MB</p></div>
+                    <span class="text-[12px] text-black/30">5</span><i class="fa-solid fa-chevron-right text-[11px] text-black/20 ml-1"></i>
+                </div>
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5" onclick="openFolder('big')">
+                    <div class="w-9 h-9 rounded-lg bg-[#007aff] flex items-center justify-center text-white"><i class="fa-solid fa-language"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">BIG - Bahasa Inggris</p><p class="text-[12px] text-black/40">4 files, 1.8 MB</p></div>
+                    <span class="text-[12px] text-black/30">12</span><i class="fa-solid fa-chevron-right text-[11px] text-black/20 ml-1"></i>
+                </div>
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5" onclick="openFolder('mtk')">
+                    <div class="w-9 h-9 rounded-lg bg-[#ff9500] flex items-center justify-center text-white"><i class="fa-solid fa-square-root-variable"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">MTK - Matematika</p><p class="text-[12px] text-black/40">6 files, 5.1 MB</p></div>
+                    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5">
+                    <div class="w-9 h-9 rounded-lg bg-[#5856d6] flex items-center justify-center text-white"><i class="fa-solid fa-flask"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">IPA - Fisika / Kimia</p><p class="text-[12px] text-black/40">2 files</p></div>
+                    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3.5 space-x-3 active:bg-black/5">
+                    <div class="w-9 h-9 rounded-lg bg-[#af52de] flex items-center justify-center text-white"><i class="fa-solid fa-landmark"></i></div>
+                    <div class="flex-1"><p class="text-[15px] text-black">IPS / Sejarah</p><p class="text-[12px] text-black/40">1 file</p></div>
+                    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- file preview list -->
+        <div id="files-preview" class="bg-white rounded-[14px] overflow-hidden shadow-sm">
+            <div class="p-3 flex items-center justify-between border-b border-black/5">
+                <p class="text-[13px] font-semibold text-black/40 uppercase">Recent Files</p>
+                <i class="fa-solid fa-ellipsis-h text-[12px] text-black/30"></i>
+            </div>
+            <div class="divide-y divide-black/5">
+                <div class="flex items-center p-3 space-x-3">
+                    <div class="w-10 h-10 bg-[#ff3b30]/10 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-pdf text-[#ff3b30]"></i></div>
+                    <div class="flex-1 min-w-0"><p class="text-[14px] text-black truncate font-medium">Tugas BIN - Resensi Novel.pdf</p><p class="text-[12px] text-black/40">Today, 10:07 AM • 1.2 MB</p></div>
+                    <i class="fa-solid fa-ellipsis text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3 space-x-3">
+                    <div class="w-10 h-10 bg-[#007aff]/10 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-word text-[#007aff]"></i></div>
+                    <div class="flex-1 min-w-0"><p class="text-[14px] text-black truncate font-medium">BIG - Essay About Amsterdam.docx</p><p class="text-[12px] text-black/40">Yesterday • 856 KB</p></div>
+                    <i class="fa-solid fa-ellipsis text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3 space-x-3">
+                    <div class="w-10 h-10 bg-[#34c759]/10 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-excel text-[#34c759]"></i></div>
+                    <div class="flex-1 min-w-0"><p class="text-[14px] text-black truncate font-medium">MTK - Rumus & Latihan.xlsx</p><p class="text-[12px] text-black/40">Oct 27 • 2.3 MB</p></div>
+                    <i class="fa-solid fa-ellipsis text-black/20"></i>
+                </div>
+                <div class="flex items-center p-3 space-x-3">
+                    <div class="w-10 h-10 bg-[#af52de]/10 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-image text-[#af52de]"></i></div>
+                    <div class="flex-1 min-w-0"><p class="text-[14px] text-black truncate font-medium">Catatan - Yogeswara.jpeg</p><p class="text-[12px] text-black/40">Oct 26 • 3.4 MB</p></div>
+                    <i class="fa-solid fa-ellipsis text-black/20"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="h-20"></div>
+    </div>
+
+    <!-- bottom tab -->
+    <div class="h-[84px] bg-[#f2f2f7]/90 backdrop-blur-xl border-t border-black/10 flex justify-around items-start pt-2 pb-6">
+        <div class="flex flex-col items-center text-[#007aff]"><i class="fa-solid fa-clock-rotate-left text-[20px]"></i><span class="text-[10px] mt-1 font-medium">Recents</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-share-nodes text-[20px]"></i><span class="text-[10px] mt-1">Shared</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-folder text-[20px]"></i><span class="text-[10px] mt-1 font-bold">Browse</span></div>
+    </div>
+
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+<div id="app-settings" class="absolute inset-0 z-20 bg-[#f2f2f7] hidden flex-col page-trans app-close overflow-hidden">
+    <div class="pt-11 px-4 pb-2 flex justify-between items-center">
+        <button onclick="goHome()" class="flex items-center text-[#007aff] text-[16px]"><i class="fa-solid fa-chevron-left text-[12px] mr-1"></i> Home</button>
+        <div class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center"><i class="fa-solid fa-magnifying-glass text-[11px]"></i></div>
+    </div>
+
+    <div class="px-4 mt-1">
+        <h1 class="text-[32px] font-bold text-black leading-none">Settings</h1>
+        <div class="mt-3 h-9 bg-[#e5e5ea] rounded-[10px] flex items-center px-3 text-black/40 text-[15px]"><i class="fa-solid fa-magnifying-glass mr-2 text-[11px]"></i> Search</div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 mt-4 space-y-4 pb-24">
+        <!-- profile -->
+<div class="bg-white rounded-[12px] p-3.5 flex items-center space-x-3 active:bg-black/5">
+    <img src="image.png" class="w-14 h-14 rounded-full object-cover" alt="Jace I.M.">
+    <div class="flex-1">
+        <p class="text-[18px] font-semibold text-black leading-tight">Jace I.M.</p>
+        <p class="text-[12px] text-black/50">Apple ID, iCloud, Media & Purchases</p>
+    </div>
+    <i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i>
+</div>
+
+
+        <div class="bg-white rounded-[12px] overflow-hidden divide-y divide-black/10">
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#ff9500] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-plane"></i></div><p class="flex-1 text-[16px]">Airplane Mode</p><div class="w-10 h-6 bg-black/10 rounded-full p-0.5"><div class="w-5 h-5 bg-white rounded-full shadow-sm"></div></div></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#007aff] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-wifi"></i></div><p class="flex-1 text-[16px]">Wi-Fi</p><p class="text-[14px] text-black/40">WIFI-SEKOLAH</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20 ml-2"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#007aff] flex items-center justify-center text-white text-[12px]"><i class="fa-brands fa-bluetooth-b"></i></div><p class="flex-1 text-[16px]">Bluetooth</p><p class="text-[14px] text-black/40">On</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20 ml-2"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#34c759] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-signal"></i></div><p class="flex-1 text-[16px]">Cellular</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+        </div>
+
+        <div class="bg-white rounded-[12px] overflow-hidden divide-y divide-black/10">
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#ff3b30] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-bell"></i></div><p class="flex-1 text-[16px]">Notifications</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#ff3b30] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-volume-high"></i></div><p class="flex-1 text-[16px]">Sounds & Haptics</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#af52de] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-moon"></i></div><p class="flex-1 text-[16px]">Focus</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#007aff] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-clock"></i></div><p class="flex-1 text-[16px]">Screen Time</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+        </div>
+
+        <div class="bg-white rounded-[12px] overflow-hidden divide-y divide-black/10">
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#8e8e93] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-gear"></i></div><p class="flex-1 text-[16px]">General</p><p class="text-[13px] bg-[#ff3b30] text-white px-1.5 rounded-full">1</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20 ml-2"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#5856d6] flex items-center justify-center text-white text-[12px]"><i class="fa-solid fa-a"></i></div><p class="flex-1 text-[16px]">Accessibility</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+            <div class="flex items-center p-3.5 space-x-3"><div class="w-7 h-7 rounded-[6px] bg-[#ff2d55] flex items-center justify-center text-white"><i class="fa-solid fa-heart text-[12px]"></i></div><p class="flex-1 text-[16px]">Yogeswara's Wallpaper</p><i class="fa-solid fa-chevron-right text-[11px] text-black/20"></i></div>
+        </div>
+
+        <p class="text-center text-[12px] text-black/30 mt-2">iPhone 15 Pro • iOS 17.6.1 • Storage 42% used</p>
+    </div>
+
+     <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/80 rounded-full z-50 cursor-pointer"></div>
+</div>
+
+<div id="app-phone" class="absolute inset-0 z-[30] bg-[#fbfbfd] hidden flex-col page-trans app-close overflow-hidden">
+    <div class="pt-12 px-5 pb-3">
+        <div class="flex justify-between items-center">
+            <button onclick="goHome()" class="text-[#007aff] text-[17px]"><i class="fa-solid fa-chevron-left text-[13px] mr-1"></i></button>
+            <div class="flex space-x-4 text-[#007aff] text-[18px]"><i class="fa-solid fa-ellipsis"></i></div>
+        </div>
+        <h1 class="text-[34px] font-bold text-black mt-3 tracking-tight">Phone</h1>
+        <div class="mt-3 h-9 bg-[#e8e8ed] rounded-[10px] flex items-center px-3 text-black/40 text-[15px]">
+            <i class="fa-solid fa-magnifying-glass mr-2 text-[12px]"></i> Search
+        </div>
+    </div>
+
+    <div class="px-5 mt-2">
+        <p class="text-[13px] font-semibold text-black/40 uppercase tracking-wider mb-3">Favorites</p>
+        <div class="flex space-x-5">
+            <div class="flex flex-col items-center">
+                <div class="w-[60px] h-[60px] rounded-full bg-black flex items-center justify-center text-white text-[22px] font-bold">Y</div>
+                <p class="text-[11px] mt-1.5 font-medium">Yogeswara</p>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#5e5ce6] to-[#2c2c9a] flex items-center justify-center text-white text-[22px] font-semibold">P</div>
+                <p class="text-[11px] mt-1.5 font-medium">Papa</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto mt-6 bg-white rounded-t-[24px] shadow-[0_-10px_30px_rgba(0,0,0,0.04)]">
+        <div class="px-5 pt-4 pb-2 flex justify-between"><p class="text-[13px] font-semibold text-black/40 uppercase">Recents</p><p class="text-[13px] text-[#007aff]">Clear</p></div>
+        <div class="divide-y divide-black/[0.06]">
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div>
+                    <div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">Today • 23m</p></div>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div>
+            </div>
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div>
+                    <div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">Yesterday • 12m</p></div>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div>
+            </div>
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div>
+                    <div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">21/06/26 • 45m</p></div>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div>
+            </div>
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-[13px]">Y</div>
+                    <div><p class="text-[17px] font-semibold text-black">Yogeswara</p><p class="text-[13px] text-black/40">19/06/26 • 12m</p></div>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-[#e8e8ed] flex items-center justify-center"><i class="fa-solid fa-info text-[10px] text-black/40"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="h-[88px] bg-white/80 backdrop-blur-2xl border-t border-black/5 flex justify-around items-start pt-3 pb-7">
+        <div class="flex flex-col items-center text-[#007aff]"><i class="fa-solid fa-star text-[22px]"></i><span class="text-[10px] mt-1 font-medium">Favorites</span></div>
+        <div class="flex flex-col items-center text-[#007aff]"><div class="bg-[#007aff] w-1 h-1 rounded-full mb-1"></div><i class="fa-solid fa-clock text-[22px]"></i><span class="text-[10px] mt-0.5 font-semibold">Recents</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-address-book text-[22px]"></i><span class="text-[10px] mt-1">Contacts</span></div>
+        <div class="flex flex-col items-center text-black/30"><i class="fa-solid fa-keypad text-[22px]"></i><span class="text-[10px] mt-1">Keypad</span></div>
+    </div>
+    <div onclick="goHome()" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black rounded-full z-50"></div>
+</div>
+<!-- APP MESSAGES - FULL FINAL TIDAK DIKURANGIN -->
+<div id="app-imessage" class="absolute inset-0 z-40 bg-white hidden flex-col rounded-[44px] overflow-hidden">
+
+  <div id="msg-list-view" class="flex flex-col h-full w-full bg-white overflow-y-auto overscroll-contain">
+    <div class="w-full bg-white shrink-0">
+      <div class="w-full pt-12 px-5 pb-2 flex items-center justify-between">
+        <button onclick="goHome()" class="w-8 h-8 rounded-full bg-[#E9E9EB] flex items-center justify-center active:scale-90"><i class="fa-solid fa-chevron-left text-[12px]"></i></button>
+        <div class="flex items-center gap-4"><button class="text-[#007AFF] text-[17px]">Edit</button><button class="w-8 h-8 rounded-full bg-[#E9E9EB] flex items-center justify-center text-[#007AFF] -mr-1"><i class="fa-regular fa-pen-to-square text-[15px]"></i></button></div>
+      </div>
+      <h1 class="text-[34px] font-bold px-5 mt-1 mb-3 leading-none">Messages</h1>
+      <div class="px-4 pb-3 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+        <div class="bg-[#E9E9EB] rounded-[10px] flex items-center px-3 py-[9px] w-full"><i class="fa-solid fa-magnifying-glass text-[#8E8E93] mr-2 text-[14px]"></i><input placeholder="Search" class="bg-transparent outline-none w-full text-[17px]" /></div>
+      </div>
+    </div>
+
+    <div class="w-full bg-white divide-y divide-black/10">
+      <div class="msg-item flex items-center px-5 py-3 cursor-pointer active:bg-black/5" data-name="Yogeswara"><img src="https://i.pinimg.com/736x/0e/a6/78/0ea678a1873873f788519760633677d0.jpg" class="w-12 h-12 rounded-full object-cover" /><div class="ml-3 flex-1"><p class="font-bold">Yogeswara</p><p class="text-[#8E8E93] text-[15px]">i love you too</p></div></div>
+      <div class="msg-item flex items-center px-5 py-3 cursor-pointer active:bg-black/5" data-name="Davki Zweitta"><img src="https://i.pinimg.com/736x/2f/c6/04/2fc6045be4ecd3d43570b37525dde948.jpg" class="w-12 h-12 rounded-full object-cover" /><div class="ml-3 flex-1"><p class="font-bold">Davki Zweitta</p><p class="text-[#8E8E93]">ofcccc</p></div></div>
+      <div class="msg-item flex items-center px-5 py-3 cursor-pointer active:bg-black/5" data-name="Papa"><img src="https://i.pinimg.com/1200x/cf/79/23/cf7923927a43ef9f621dd83aa830a799.jpg" class="w-12 h-12 rounded-full object-cover" /><div class="ml-3 flex-1"><p class="font-bold">Papa</p><p class="text-[#8E8E93]">Cepat pulang!</p></div></div>
+      <div class="msg-item flex items-center px-5 py-3 cursor-pointer active:bg-black/5" data-name="Mama"><img src="https://i.pinimg.com/736x/03/73/f7/0373f76c02a79059d20552e8177b1c6b.jpg" class="w-12 h-12 rounded-full object-cover" /><div class="ml-3 flex-1"><p class="font-bold">Mama</p><p class="text-[#8E8E93]">iyaa</p></div></div>
+      <div class="h-24"></div>
+    </div>
+  </div>
+
+  <!-- CHAT VIEW - HEADER PAKE FOTO BULAT DI ATAS NAMA -->
+  <div id="msg-chat-view" class="hidden flex-col h-full w-full bg-white relative">
+    <div class="flex-shrink-0 w-full pt-10 px-4 pb-2 flex flex-col items-center justify-center bg-[#f9f9f9]/90 backdrop-blur border-b border-black/10 relative">
+      <button id="msg-back" class="absolute left-4 top-[48px] w-8 h-8 rounded-full bg-[#E9E9EB] flex items-center justify-center active:scale-90"><i class="fa-solid fa-chevron-left text-[12px]"></i></button>
+      <button class="absolute right-4 top-[48px] w-8 h-8 rounded-full bg-[#E9E9EB] flex items-center justify-center text-[#007AFF]"><i class="fa-solid fa-video text-[14px]"></i></button>
+      <img id="chat-avatar" src="" class="w-10 h-10 rounded-full object-cover mb-1 mt-1 hidden" />
+      <p id="chat-name" class="font-semibold text-[17px] leading-none">Yogeswara</p>
+      <p class="text-[12px] text-[#8E8E93] mt-[2px]"><i class="fa-solid fa-chevron-down text-[9px]"></i></p>
+    </div>
+
+    <!-- TEMPAT BUAT CHATAN - KAYA SCREENSHOT LU -->
+    <div id="chat-bubble-area" class="flex-1 overflow-y-auto p-3 bg-white flex flex-col gap-[2px]"></div>
+
+    <div id="bottom-area" class="flex-shrink-0 mt-auto w-full">
+      <div id="imsg-input-bar" class="bg-white border-t border-black/10 px-3 py-2 flex items-center gap-2 cursor-pointer">
+        <div class="w-8 h-8 rounded-full bg-[#e9e9eb] flex items-center justify-center text-[#8e8e93]"><i class="fa-solid fa-plus text-[16px]"></i></div>
+        <div id="imsg-field" class="flex-1 h-9 bg-white border border-black/20 rounded-full flex items-center px-4"><span class="text-[17px] text-black/30">iMessage</span></div>
+        <div class="w-8 h-8 rounded-full bg-[#007AFF] flex items-center justify-center text-white"><i class="fa-solid fa-arrow-up text-[12px]"></i></div>
+      </div>
+
+      <!-- KEYBOARD - DEFAULT KESEMBUNYI, MUNCUL PAS INPUT DIKLIK -->
+      <div id="imsg-keyboard" class="hidden bg-[#d1d4d8] flex-col w-full">
+        <div class="flex gap-[6px] justify-center pt-2 px-1"><div class="k">Q</div><div class="k">W</div><div class="k">E</div><div class="k">R</div><div class="k">T</div><div class="k">Y</div><div class="k">U</div><div class="k">I</div><div class="k">O</div><div class="k">P</div></div>
+        <div class="flex gap-[6px] justify-center mt-2 px-5"><div class="k">A</div><div class="k">S</div><div class="k">D</div><div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div></div>
+        <div class="flex gap-[6px] justify-center mt-2"><div class="k-dark"><i class="fa-solid fa-arrow-up"></i></div><div class="k">Z</div><div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div><div class="k-dark"><i class="fa-solid fa-delete-left text-[13px]"></i></div></div>
+        <div class="flex gap-[6px] justify-center mt-2 px-1 pb-1"><div class="k-dark text-[13px]">123</div><div class="k flex-1 max-w-[180px] text-[14px] text-[#8e8e93]">space</div><div class="k-dark text-[13px] w-[80px]">return</div></div>
+        <div class="flex justify-between items-center px-6 pt-2 pb-7 text-[#8e8e93]"><i class="fa-regular fa-face-smile text-[22px]"></i><i class="fa-solid fa-microphone text-[20px]"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black rounded-full z-50 pointer-events-none"></div>
+</div>
+<<!-- SAFARI APP - FULL FIX -->
+<div id="safari-app" class="app-window" style="display:none; position:absolute; inset:0; background:#f2f2f7; z-index:200; flex-direction:column; font-family:-apple-system, BlinkMacSystemFont">
+
+  <div style="height:48px; background:rgba(255,255,255,0.9); backdrop-filter:blur(20px); display:flex; align-items:center; justify-content:space-between; padding:0 14px; border-bottom:0.5px solid #c6c6c8; flex-shrink:0">
+    <span onclick="closeApp('safari')" style="color:#007AFF; font-size:17px; cursor:pointer">Done</span>
+    <div style="text-align:center">
+      <div style="font-weight:600; font-size:15px">History</div>
+      <div style="font-size:11px; color:#8e8e93">iCloud Tabs</div>
+    </div>
+    <span style="color:#007AFF; font-size:17px; cursor:pointer">Clear</span>
+  </div>
+
+  <div style="padding:8px 12px; background:#f2f2f7">
+    <div style="background:white; border-radius:10px; padding:8px 12px; color:#8E8E93; font-size:14px; display:flex; gap:6px">
+      <span>🔍</span> Search History
+    </div>
+  </div>
+
+  <div style="flex:1; overflow-y:auto; padding-bottom:20px">
+    <p style="font-size:11px; color:#6d6d72; margin:16px 16px 6px; font-weight:600">TODAY</p>
+    <div style="background:white; margin:0 10px; border-radius:10px; overflow:hidden">
+      <div style="padding:11px 14px; border-bottom:0.5px solid #eee; display:flex; justify-content:space-between">
+        <div><div style="font-size:14px">vite + react - getting started | Vite docs</div><div style="font-size:12px; color:#8e8e93">vitejs.dev — 13:02</div></div><div style="color:#c7c7cc">›</div>
+      </div>
+      <div style="padding:11px 14px; border-bottom:0.5px solid #eee"><div style="font-size:14px">perbedaan framework vs library javascript</div><div style="font-size:12px; color:#8e8e93">google.com — 11:15</div></div>
+      <div style="padding:11px 14px"><div style="font-size:14px">cara buat iPhone clone html css js</div><div style="font-size:12px; color:#8e8e93">youtube.com — 10:30</div></div>
+    </div>
+
+    <p style="font-size:11px; color:#6d6d72; margin:16px 16px 6px; font-weight:600">YESTERDAY</p>
+    <div style="background:white; margin:0 10px; border-radius:10px; overflow:hidden">
+      <div style="padding:11px 14px; border-bottom:0.5px solid #eee"><div style="font-size:14px">React Router DOM - pindah halaman</div><div style="font-size:12px; color:#8e8e93">stackoverflow.com — 21:30</div></div>
+      <div style="padding:11px 14px; border-bottom:0.5px solid #eee"><div style="font-size:14px">tugas RPL - definisi bahasa pemrograman</div><div style="font-size:12px; color:#8e8e93">docs.google.com — 19:05</div></div>
+      <div style="padding:11px 14px"><div style="font-size:14px">Node.js vs Bun - framework backend terbaru</div><div style="font-size:12px; color:#8e8e93">medium.com — 18:22</div></div>
+    </div>
+
+    <p style="font-size:11px; color:#6d6d72; margin:16px 16px 6px; font-weight:600">LAST WEEK</p>
+    <div style="background:white; margin:0 10px; border-radius:10px; overflow:hidden">
+      <div style="padding:11px 14px"><div style="font-size:14px">apa itu tailwind css</div><div style="font-size:12px; color:#8e8e93">tailwindcss.com — Monday</div></div>
+    </div>
+  </div> <!-- TUTUP history list, INI YANG KEMARIN KURANG -->
+
+  <div style="height:44px; background:rgba(248,248,248,0.9); border-top:0.5px solid #c6c6c8; display:flex; align-items:center; justify-content:space-around; color:#007AFF; font-size:20px; flex-shrink:0">
+    <span>←</span><span style="opacity:0.3">→</span><span>⎙</span><span>📖</span><span>⧉</span>
+  </div>
+
+</div> <!-- TUTUP safari-app, INI YANG KEMARIN KURANG -->
+
+<style>
+.k{width:32px;height:42px;background:white;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 1px 0 #999;cursor:pointer;user-select:none;}
+.k:active,.k-dark:active{transform:scale(0.92);background:#e5e5e5;}
+.k-dark{width:42px;height:42px;background:#aab0b8;border-radius:5px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 #888;cursor:pointer;user-select:none;}
+</style>
+<!-- APP MUSIC - JANGAN TIMPA SAFARI -->
+<div id="app-music" class="absolute inset-0 z-30 bg-black hidden flex-col">
+  <!-- header kayak Apple Music -->
+  <div class="h-[54px] pt-3 bg-black flex items-center justify-between px-4 border-b border-white/10 shrink-0">
+    <span onclick="goHome()" class="text-[#ff2d55] text-[17px]">Done</span>
+    <span class="text-white font-semibold text-[17px]">Romantic</span>
+    <span class="text-[#ff2d55] text-[17px]">•••</span>
+  </div>
+  
+  <div class="flex-1 overflow-y-auto bg-black pb-10">
+    <div class="p-5">
+      <div class="w-48 h-48 mx-auto bg-gradient-to-br from-pink-500 to-red-600 rounded-lg shadow-2xl flex items-center justify-center text-6xl">💿</div>
+      <h1 class="text-white text-[22px] font-bold mt-5 text-center">Romantic English</h1>
+      <p class="text-white/60 text-[13px] text-center mt-1">Yogeswara • 7 Songs</p>
+      <div class="flex justify-center gap-8 mt-5">
+        <button class="bg-[#ff2d55] text-white px-8 py-2 rounded-full font-semibold">▶ Play</button>
+        <button class="bg-white/20 text-white px-8 py-2 rounded-full font-semibold">🔀 Shuffle</button>
+      </div>
+    </div>
+
+    <div class="mt-2">
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">1</span><div class="flex-1"><div class="text-white text-[16px]">Lover</div><div class="text-white/50 text-[13px]">Taylor Swift</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">2</span><div class="flex-1"><div class="text-white text-[16px]">Perfect</div><div class="text-white/50 text-[13px]">Ed Sheeran</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">3</span><div class="flex-1"><div class="text-white text-[16px]">Die With A Smile</div><div class="text-white/50 text-[13px]">Lady Gaga, Bruno Mars</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">4</span><div class="flex-1"><div class="text-white text-[16px]">Best Part</div><div class="text-white/50 text-[13px]">Daniel Caesar ft. H.E.R.</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">5</span><div class="flex-1"><div class="text-white text-[16px]">Until I Found You</div><div class="text-white/50 text-[13px]">Stephen Sanchez</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">6</span><div class="flex-1"><div class="text-white text-[16px]">All of Me</div><div class="text-white/50 text-[13px]">John Legend</div></div><span class="text-white/30">•••</span></div>
+      <div class="flex items-center gap-3 px-5 py-3 active:bg-white/10"><span class="text-white/40 w-5">7</span><div class="flex-1"><div class="text-white text-[16px]">Yellow</div><div class="text-white/50 text-[13px]">Coldplay</div></div><span class="text-white/30">•••</span></div>
+    </div>
+  </div>
+</div>
+<script>
+    let passcode = ''; const correctPasscode = '0000'; let isUnlocked = false;
+    function updateClock() { const now = new Date(); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); const timeStr = `${hours}:${minutes}`; const statusTime = document.getElementById('status-time'); const lockTime = document.getElementById('lock-time'); const lockDate = document.getElementById('lock-date'); if(statusTime) statusTime.innerText = timeStr; if(lockTime) lockTime.innerText = timeStr; if(lockDate) lockDate.innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
+    setInterval(updateClock, 1000); updateClock();
+    const lockscreen = document.getElementById('lockscreen'); let startY = 0;
+    lockscreen.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; });
+    lockscreen.addEventListener('touchend', (e) => { let endY = e.changedTouches[0].clientY; if (startY - endY > 50) unlockGesture(); });
+    lockscreen.addEventListener('mousedown', (e) => { startY = e.clientY; });
+    lockscreen.addEventListener('mouseup', (e) => { let endY = e.clientY; if (startY - endY > 50) unlockGesture(); });
+    function unlockGesture() { if(!isUnlocked) { lockscreen.style.display = 'none'; const passcodeScreen = document.getElementById('passcode-screen'); passcodeScreen.classList.remove('opacity-0', 'pointer-events-none'); passcodeScreen.style.display = 'flex'; } }
+    window.pressKey = function(num) { if (passcode.length < 4) { passcode += num; updatePasscodeUI(); } if (passcode.length === 4) { setTimeout(() => { if (passcode === correctPasscode) { isUnlocked = true; document.getElementById('lockscreen').style.display = 'none'; document.getElementById('passcode-screen').style.display = 'none'; const homescreen = document.getElementById('homescreen'); homescreen.classList.remove('opacity-0', 'pointer-events-none'); homescreen.classList.add('opacity-100'); homescreen.style.display = 'flex'; homescreen.style.visibility = 'visible'; passcode = ''; updatePasscodeUI(); } else { const screen = document.getElementById('passcode-screen'); screen.classList.add('shake'); setTimeout(() => { screen.classList.remove('shake'); passcode = ''; updatePasscodeUI(); }, 350); } }, 150); } }
+    function updatePasscodeUI() { const dotsContainer = document.getElementById('dots-container'); if (dotsContainer) { const dots = dotsContainer.children; for (let i = 0; i < 4; i++) { if (i < passcode.length) dots[i].classList.add('bg-white'); else dots[i].classList.remove('bg-white'); } } const actionBtn = document.getElementById('passcode-action-btn'); if (actionBtn) { actionBtn.innerText = passcode.length > 0 ? 'Delete' : 'Cancel'; } }
+    window.handlePasscodeAction = function() { if (passcode.length > 0) { passcode = passcode.slice(0, -1); updatePasscodeUI(); } else { cancelPasscode(); } }
+    window.cancelPasscode = function() { passcode = ''; updatePasscodeUI(); document.getElementById('passcode-screen').style.display = 'none'; document.getElementById('lockscreen').style.display = 'flex'; }
+
+    // --- FIX SAFARI: 1 openApp yang bener ---
+    window.openApp = function(appName) { 
+      // tutup semua app dulu
+      document.querySelectorAll('[id^="app-"], #safari-app').forEach(el=>{ 
+        el.classList.remove('app-open','flex'); 
+        el.classList.add('app-close'); 
+        el.style.display='none'; 
+        el.classList.add('hidden');
+      });
+      let app = document.getElementById(`app-${appName}`) || document.getElementById(`${appName}-app`) || document.getElementById('safari-app');
+      if (app) { 
+        app.classList.remove('app-close','hidden'); 
+        app.classList.add('app-open','flex'); 
+        app.style.display = 'flex'; 
+        app.style.flexDirection='column';
+        if(appName==='calendar') renderCalendar(); 
+        if(appName==='notes') renderNotes();
+      } 
+    }
+    
+    window.closeApp = function(appName){
+      let app = document.getElementById(`app-${appName}`) || document.getElementById(`${appName}-app`) || document.getElementById('safari-app');
+      if(app){ app.classList.remove('app-open'); app.classList.add('app-close'); setTimeout(()=>{ app.style.display='none'; app.classList.add('hidden'); app.classList.remove('flex'); },280); }
+    }
+    window.goHome = function() { 
+      if (!isUnlocked) return; 
+      document.querySelectorAll('[id^="app-"], #safari-app').forEach(app => { 
+        app.classList.remove('app-open'); 
+        app.classList.add('app-close'); 
+        setTimeout(() => { app.style.display = 'none'; app.classList.add('hidden'); app.classList.remove('flex'); }, 280); 
+      }); 
+      document.getElementById('imsg-keyboard')?.classList.add('hidden');
+      document.getElementById('imsg-keyboard')?.classList.remove('flex');
+    }
+
+    let calDate = new Date();
+    function renderCalendar(){ const year=calDate.getFullYear(); const month=calDate.getMonth(); const firstDay=new Date(year,month,1).getDay(); const daysInMonth=new Date(year,month+1,0).getDate(); const today=new Date(); const yEl=document.getElementById('cal-year'); const mEl=document.getElementById('cal-month'); if(yEl) yEl.innerText=year; if(mEl) mEl.innerText=calDate.toLocaleString('en-US',{month:'long'}); const detail=document.getElementById('cal-today-detail'); if(detail) detail.innerText=today.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'short'})+" — all day free"; const grid=document.getElementById('cal-grid'); if(!grid) return; grid.innerHTML=""; for(let i=0;i<firstDay;i++){ grid.innerHTML+=`<div></div>`; } for(let d=1; d<=daysInMonth; d++){ const isToday=d===today.getDate() && month===today.getMonth() && year===today.getFullYear(); grid.innerHTML+=`<div class="flex flex-col items-center justify-center py-1"><div class="${isToday?'bg-black text-white w-7 h-7 rounded-full flex items-center justify-center font-bold':'text-black'} text-[16px] w-7 h-7 flex items-center justify-center">${d}</div>${isToday?'<div class="w-1 h-1 bg-black rounded-full mt-1"></div>':''}</div>`; } }
+    window.changeMonth=function(dir){ calDate.setMonth(calDate.getMonth()+dir); renderCalendar(); }
+    window.goToday=function(){ calDate=new Date(); renderCalendar(); }
+    renderCalendar();
+
+    window.switchPhotosTab = function(tab){
+      const lib = document.getElementById('photos-library-view');
+      const col = document.getElementById('photos-collections-view');
+      const tLib = document.getElementById('tab-library');
+      const tCol = document.getElementById('tab-collections');
+      if(tab==='library'){ lib.classList.remove('hidden'); lib.classList.add('flex'); col.classList.add('hidden'); col.classList.remove('flex'); tLib.classList.add('bg-black/10'); tLib.classList.remove('opacity-60'); tCol.classList.add('opacity-60'); tCol.classList.remove('bg-black/10'); }
+      else { col.classList.remove('hidden'); col.classList.add('flex'); lib.classList.add('hidden'); lib.classList.remove('flex'); tCol.classList.add('bg-black/10'); tCol.classList.remove('opacity-60'); tLib.classList.add('opacity-60'); tLib.classList.remove('bg-black/10'); }
+    }
+    window.openPhoto = function(src){ document.getElementById('photo-detail-img').src=src; document.getElementById('photo-detail').classList.remove('hidden'); document.getElementById('photo-detail').classList.add('flex'); }
+    window.closePhoto = function(){ document.getElementById('photo-detail').classList.add('hidden'); }
+
+    const MY_NOTES = [
+      { title: "Teruntuk Yogeswara", sub: "some things I never want to forget", body: `yogeswara, i'm genuinely so proud of you and everything you've achieved. serius, aku bangga banget sama kamu dan semua hal yang udah kamu lewatin sampai bisa ada di titik ini. you deserve so many good things, and i really hope life will be kinder to you from now on. aku nggak mau kamu terus-terusan ketemu hal yang bikin kamu sakit atau sedih. semoga semua kesusahan pelan-pelan diganti sama kebahagiaan, and may the world always give you more reasons to smile than to cry.\n\ni love you so, so much, and i pray that you'll always be here for a long, long time. semoga kamu selalu sehat, panjang umur, dijauhkan dari segala hal buruk, dan selalu dikelilingi orang-orang yang tulus sayang sama kamu. please remember that you don't have to go through everything alone, because i'll always be one call away whenever you need someone to talk to. aku bakal selalu berusaha ada buat kamu, kapan pun kamu butuh. walaupun maaf banget kalau pas kamu 'call' ternyata aku malah ketiduran but seriously, i'm always rooting for you, and i hope you'll always be happy. please take care of yourself, stay here for a long, long time, and never forget how loved you are. 🤍` },
+      { title: "to do", sub: "things i need to do", body: "- Anter kue ke Bu Arni\n- KELASS INDUSTRIII\n- nabung" },
+      { title: "random thoughts", sub: "11:48 PM", body: "kenapa ya kalo malem pikiran jadi kemana-mana" },
+      { title: "Fun Facts About Yoges", sub: "little things about my favorite person", body: "1. Pinter bikin kue (soon coba kue dia yang mantep itu)\n2. Kuat banget udah lewatin banyak hal\n3. Deserve semua hal baik di dunia" }
+    ];
+    function renderNotes(){
+      const list = document.getElementById('my-notes-list');
+      if(!list) return;
+      list.innerHTML = '';
+      MY_NOTES.forEach((n, i) => {
+        const div = document.createElement('div');
+        div.className = "px-5 py-4 border-b border-black/10 active:bg-black/5 cursor-pointer";
+        div.innerHTML = `<p class="font-semibold text-[17px] text-black">${n.title}</p><p class="text-[14px] text-black/40 mt-1 line-clamp-2">${n.sub}</p>`;
+        div.onclick = () => openNote(i);
+        list.appendChild(div);
+      });
+    }
+    function openNote(index){
+      const n = MY_NOTES[index];
+      document.getElementById('detail-title').innerText = n.title;
+      document.getElementById('detail-body').innerText = n.body;
+      document.getElementById('notes-list-view').classList.add('hidden');
+      document.getElementById('notes-detail-view').classList.remove('hidden');
+      document.getElementById('notes-detail-view').classList.add('flex');
+    }
+    function closeNote(){
+      document.getElementById('notes-detail-view').classList.add('hidden');
+      document.getElementById('notes-detail-view').classList.remove('flex');
+      document.getElementById('notes-list-view').classList.remove('hidden');
+    }
+
+    function updateWorldClock(){
+        const now = new Date();
+        const panti = document.getElementById('clock-panti');
+        if(panti) panti.innerText = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit', hour12:false});
+        const big = document.getElementById('clock-big-time');
+        if(big) big.innerText = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit', hour12:false});
+        const bigDate = document.getElementById('clock-big-date');
+        if(bigDate) bigDate.innerText = now.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
+        const ams = new Date(now.toLocaleString('en-US',{timeZone:'Europe/Amsterdam'}));
+        const amsEl = document.getElementById('clock-ams');
+        if(amsEl) amsEl.innerText = ams.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit', hour12:false});
+        const yog = document.getElementById('clock-yoges');
+        if(yog) yog.innerHTML = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit', hour12:false}) + ' <span class="w-2 h-2 bg-[#34c759] rounded-full ml-2"></span>';
+        const h = now.getHours() % 12 * 30 + now.getMinutes() * 0.5;
+        const m = now.getMinutes() * 6;
+        const hEl = document.getElementById('clock-hour');
+        const mEl = document.getElementById('clock-min');
+        if(hEl) hEl.style.transform = `translateX(-50%) rotate(${h}deg)`;
+        if(mEl) mEl.style.transform = `translateX(-50%) rotate(${m}deg)`;
+    }
+    setInterval(updateWorldClock, 1000);
+    updateWorldClock();
+
+    const chats = {
+      "Yogeswara": [
+        { from: "them", text: "eh sayangku kemana??" },
+        { from: "them", text: "ketiduran?" },
+        { from: "me", text: "baru bangun " },
+        { from: "me", text: "maaf ketiduran" },
+        { from: "them", text: "kenapa minta maaf sayangkuu??, tidur lagi aja kalau masih ngantuk" },
+        { from: "me", text: "soalnya ga say babay dan cimumuy kamuu" },
+        { from: "me", text: "pasti kamu miss miss aku" },
+        { from: "me", text: "pasti kamuuuu linduuu belat sama akuu" },
+        { from: "them", text: "bangettt" },
+        { from: "them", text: "acu lindu banget cama ayang acuu iniii " },
+        { from: "them", text: "duhh lucunya sayangkuu" },
+        { from: "me", text: "aaaa lindu cekali??? cangat cangat lindu atau lindu cekalii" },
+        { from: "them", text: "both of them, cangat cangat lindu dan lindu cekaliii" },
+        { from: "me", text: "cangattt linduu" },
+        { from: "me", text: "achuu ughaa cangat cangat lindu" },
+        { from: "me", text: "mahuu cimumu cimumu" },
+        { from: "them", text: "cinii cayang, duhh lucunya sayangkuu" },
+        { from: "me", text: "umm, kalau aku rewel gini ke kamu" },
+        { from: "me", text: "cape ga" },
+        { from: "them", text: "ya engga lah sayang" },
+        { from: "them", text: "malah gemes" },
+        { from: "them", text: "salting jujur aku, sayang" },
+        { from: "them", text: "soalnya awalnya gengsi, tiba-tiba mau clingy, rewel" },
+        { from: "them", text: "i love u" },
+        { from: "me", text: "i love you too" },
+      ],
+      "Papa": [
+        { from: "me", text: "Abang!." },
+        { from: "me", text: "Pulang! kamu itu taunya main aja terus, mama disini sendirian ga ada yang bantu" },
+        { from: "me", text: "Pulang!" },
+        { from: "them", text: "iyaa pa, otw" },
+        { from: "me", text: "Kamu ini kalau ga dimarahi ga ada kepikiran mau pulang" },
+        { from: "me", text: "Mau jadi apa main terus" },
+        { from: "me", text: "Cepat pulang!" },
+      ],
+      "Mama": [
+        { from: "me", text: "Abang bangun, sudah jam berapa" },
+        { from: "me", text: "Abang!." },
+        { from: "me", text: "Libur bukan berarti enak santai-santai ya abang!" },
+        { from: "me", text: "Bangun terus makan, sudah jam sgini!" },
+        { from: "them", text: "iyaa" },
+      ],
+      "Davki Zweitta": [
+        { from: "me", text: "sayaangg" },
+        { from: "me", type:"image", src:"https://i.pinimg.com/736x/d4/bf/f3/d4bff32d2a0e2db9c323c5df02d6d6c4.jpg" },
+        { from: "me", text: "cium kamuu" },
+        { from: "them", text: "gapapa" },
+        { from: "them", text: "keliatan seperti monyet" },
+        { from: "them", text: "yang penting ntikku bak bidadari" },
+        { from: "me", text: "kamu rela ya jadi monyet demi aku" },
+        { from: "them", text: "yang penting kamu cakep" },
+        { from: "me", text: "ofcccc" },
+      ],
+    };
+    function renderChat(name){
+      const area=document.getElementById('chat-bubble-area'); 
+      if(!area) return;
+      area.innerHTML='';
+      area.style.display='flex';
+      area.style.flexDirection='column';
+      (chats[name]||[]).forEach(m=>{
+        const wrap=document.createElement('div');
+        wrap.style.display='flex'; wrap.style.flexDirection='column';
+        wrap.style.maxWidth='78%'; wrap.style.marginBottom='6px';
+        wrap.style.alignSelf = m.from==='me' ? 'flex-start' : 'flex-end';
+        if(m.type==='image' && m.src){
+          const img=document.createElement('img');
+          img.src=m.src; img.style.width='180px'; img.style.borderRadius='18px';
+          img.onclick=()=>window.openPhoto(m.src);
+          wrap.appendChild(img);
+        } else {
+          const b=document.createElement('div'); b.textContent=m.text;
+          b.style.padding='10px 14px'; b.style.borderRadius='18px'; b.style.fontSize='15px';
+          if(m.from==='me'){ b.style.background='rgb(229,229,234)'; b.style.color='black'; }
+          else { b.style.background='rgb(0,122,255)'; b.style.color='white'; }
+          wrap.appendChild(b);
+        }
+        area.appendChild(wrap);
+      });
+      area.scrollTop=area.scrollHeight;
+    }
+
+    // --- FIX iMessage: cuma 1x listener ---
+    document.querySelectorAll('.msg-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        const name = item.dataset.name;
+        const img = item.querySelector('img')?.src;
+        const avatar = document.getElementById('chat-avatar');
+        if(img && avatar){ avatar.src = img; avatar.classList.remove('hidden'); }
+        document.getElementById('chat-name').textContent = name;
+        document.getElementById('msg-list-view').classList.add('hidden');
+        document.getElementById('msg-list-view').classList.remove('flex');
+        const cv = document.getElementById('msg-chat-view');
+        cv.classList.remove('hidden'); cv.classList.add('flex');
+        renderChat(name);
+      });
+    });
+    document.getElementById('msg-back')?.addEventListener('click', ()=>{
+      document.getElementById('msg-chat-view').classList.add('hidden');
+      document.getElementById('msg-chat-view').classList.remove('flex');
+      document.getElementById('msg-list-view').classList.remove('hidden');
+      document.getElementById('msg-list-view').classList.add('flex');
+      document.getElementById('imsg-keyboard')?.classList.add('hidden');
+      document.getElementById('imsg-keyboard')?.classList.remove('flex');
+    });
+    document.getElementById('imsg-field')?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const kb = document.getElementById('imsg-keyboard');
+      if(kb){ kb.classList.remove('hidden'); kb.classList.add('flex'); }
+    });
+    document.getElementById('chat-bubble-area')?.addEventListener('click', ()=>{
+      const kb = document.getElementById('imsg-keyboard');
+      if(kb){ kb.classList.add('hidden'); kb.classList.remove('flex'); }
+    });
+    document.getElementById('imsg-keyboard')?.addEventListener('click', (e)=>{ e.stopPropagation(); });
+</script>
+</body>
+</html>
