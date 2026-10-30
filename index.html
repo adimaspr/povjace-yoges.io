@@ -19,6 +19,42 @@
         .ios-app-icon { width: 58px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; overflow: hidden; flex-shrink: 0; background-color: #1c1c1e; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-12px); } 40%, 80% { transform: translateX(12px); } }
         .shake { animation: shake 0.35s ease-in-out; }
+        /* FIX DONE & FULLSCREEN - PASTE DI PALING BAWAH DALAM <style> */
+/* FIX BENER - DESKTOP TETEP HP, DI HP BARU FULLSCREEN */
+@media (max-width: 600px) {
+  body {
+    padding: 0 !important;
+  }
+  #phone {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+}
+
+/* FIX DONE BIAR GAK KETABRAK PONI */
+#app-phone .flex.justify-between,
+#app-music .flex.justify-between {
+  padding-top: 42px !important;
+}
+/* PAKSA IKON NAIK, DOCK TETEP BAWAH */
+#homescreen {
+  justify-content: flex-start !important;
+}
+#homescreen > div:nth-child(3) {
+  margin-top: 16px !important;
+  margin-bottom: auto !important;
+}
+#homescreen img.object-cover {
+  object-position: center 15% !important;
+
+}
+#homescreen .grid-cols-4 { 
+  margin-top: 10px !important; 
+  margin-bottom: auto !important; 
+}
     </style>
 </head>
 <body style="background:#0b0b0e; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:20px; overflow:hidden;">
@@ -38,7 +74,7 @@
 
         <!-- 1. LOCKSCREEN -->
         <div id="lockscreen" class="absolute inset-0 z-30 flex flex-col justify-between pt-14 pb-8 px-6 text-white page-trans cursor-pointer select-none overflow-hidden">
-            <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover -z-10 pointer-events-none" alt="Wallpaper">
+           <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover object-[center_55%] -z-10 pointer-events-none" alt="Wallpaper">
             <div class="flex flex-col items-center mt-4">
                 <p id="lock-date" class="text-base font-medium tracking-wide text-white/90">Friday, June 5</p>
                 <h1 id="lock-time" class="text-8xl font-bold tracking-tight mt-0.5">18:00</h1>
@@ -87,65 +123,48 @@
             </div>
         </div>
 
-        <div id="homescreen" class="absolute inset-0 z-10 pt-12 pb-5 px-4 flex flex-col justify-between opacity-100 pointer-events-auto page-trans">
-            <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover -z-10 pointer-events-none" alt="Wallpaper">
-            <div class="absolute inset-0 bg-black/25 -z-10 pointer-events-none"></div>
-            <div>
-                <div class="grid grid-cols-2 gap-3 mt-1">
-                    <div class="bg-[#101e38]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
-                        <div class="flex justify-between items-start">
-                            <div><p class="text-xs font-semibold">Amsterdam <i class="fa-solid fa-location-arrow text-[9px]"></i></p><h2 class="text-3xl font-light mt-0.5">21°</h2></div>
-                            <i class="fa-solid fa-moon text-2xl text-yellow-200"></i>
-                        </div>
-                        <div><p class="text-[11px] font-medium">Partly Cloudy</p><p class="text-[10px] text-white/70">H:27° L:17°</p></div>
-                    </div>
-                    <div class="bg-[#1c1c1e]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
-                        <div><p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">WEDNESDAY</p><h2 class="text-3xl font-bold leading-tight">28</h2></div>
-                        <div class="bg-white/10 rounded-xl p-2"><p class="text-[11px] text-white/80 font-medium">No events today</p></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 text-center text-[10px] text-white/70 font-medium mt-1 px-1"><span>Weather</span><span>Calendar</span></div>
+<div id="homescreen" class="absolute inset-0 z-10 pt-12 pb-2 px-4 flex flex-col justify-between opacity-100 pointer-events-auto page-trans">
+    <img src="https://i.pinimg.com/736x/bb/ac/3e/bbac3e48149d20cfe0d67a4d912a6f60.jpg" class="absolute inset-0 w-full h-full object-cover object-[center_15%] -z-10 pointer-events-none" alt="Wallpaper">
+    <div class="absolute inset-0 bg-black/25 -z-10 pointer-events-none"></div>
+    
+    <div>
+        <div class="grid grid-cols-2 gap-3 mt-1">
+            <div class="bg-[#101e38]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
+                <div class="flex justify-between items-start"><div><p class="text-xs font-semibold">Amsterdam <i class="fa-solid fa-location-arrow text-[9px]"></i></p><h2 class="text-3xl font-light mt-0.5">21°</h2></div><i class="fa-solid fa-moon text-2xl text-yellow-200"></i></div>
+                <div><p class="text-[11px] font-medium">Partly Cloudy</p><p class="text-[10px] text-white/70">H:27° L:17°</p></div>
             </div>
-            <div class="grid grid-cols-4 gap-y-4 gap-x-2 my-auto px-1">
-                <div onclick="openApp('calendar')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCyE95EYs5falgHmbZlmzsERusGjbJxJTchpQI6cbAqed8_Bw8tahUnLo&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Calendar</span></div>
-                <div onclick="openApp('photos')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-photos-icon-svg-download-png-493155.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Photos</span></div>
-<div class="flex flex-col items-center space-y-1 opacity-40">
-    <div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgD312yGz9WSqZiq74-Ke-h12hi2ORFq2EwafhLrEj9QxJcKpOi_FwLhr_&s=10" class="w-full h-full object-cover"></div>
-    <span class="text-[11px] text-white/50 font-medium drop-shadow">Camera</span>
-</div>
-                <div onclick="openApp('notes')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Notes_%28iOS_26%29_app_icon.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Notes</span></div>
-                <div onclick="openApp('maps')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH4A3M-UdVZSljMrF4WXX8UHw2zxUoS3fKGIFwZL27Qg&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Maps</span></div>
-                <div onclick="openApp('clock')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.jim-nielsen.com/.netlify/images?url=/icongallery/ios/clock-2025-10-20/1024.png&w=1024" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Clock</span></div>
-                <div onclick="openApp('weather')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://e7.pngegg.com/pngimages/458/593/png-clipart-weather-computer-icons-ios-7-apple-weather-forecast-blue-cloud-thumbnail.png " class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Weather</span></div>
-                <div onclick="openApp('mail')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbCp8BT9iIyq86bYlwwJNFCN9v5JDRd-A4RUCPyMKUWQ&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Mail</span></div>
-                <div onclick="openApp('files')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRECvNxFKJgJel_pwpycWAfXDLiG-r_5K5OhIl_A5TFf28hz_XVwfMYE7kl&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Files</span></div>
-                <div onclick="openApp('settings')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-settings-icon-svg-download-png-493162.png?f=webp" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Settings</span></div>
+            <div class="bg-[#1c1c1e]/90 p-3.5 rounded-[22px] text-white flex flex-col justify-between h-34 border border-white/10 shadow-lg">
+                <div><p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">WEDNESDAY</p><h2 class="text-3xl font-bold leading-tight">28</h2></div>
+                <div class="bg-white/10 rounded-xl p-2"><p class="text-[11px] text-white/80 font-medium">No events today</p></div>
             </div>
-          <div class="flex justify-center my-1">
-    <div class="bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full flex items-center space-x-1.5 text-white/90 text-xs shadow-sm">
-        <i class="fa-solid fa-magnifying-glass text-[10px]"></i><span>Search</span>
+        </div>
+        <div class="grid grid-cols-2 text-center text-[10px] text-white/70 font-medium mt-1 px-1"><span>Weather</span><span>Calendar</span></div>
     </div>
-</div>
 
-<div class="ios-dock rounded-[30px] p-2.5 grid grid-cols-4 gap-2 items-center">
-    <!-- PHONE - INI YANG TADI HILANG -->
-    <div onclick="openApp('phone')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
-        <img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-phone-icon-svg-download-png-493154.png?f=webp" class="w-full h-full object-cover">
+    <div class="grid grid-cols-4 gap-y-4 gap-x-2 mt-4 mb-auto px-1">
+        <div onclick="openApp('calendar')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCyE95EYs5falgHmbZlmzsERusGjbJxJTchpQI6cbAqed8_Bw8tahUnLo&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Calendar</span></div>
+        <div onclick="openApp('photos')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-photos-icon-svg-download-png-493155.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Photos</span></div>
+        <div class="flex flex-col items-center space-y-1 opacity-40"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgD312yGz9WSqZiq74-Ke-h12hi2ORFq2EwafhLrEj9QxJcKpOi_FwLhr_&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white/50 font-medium drop-shadow">Camera</span></div>
+        <div onclick="openApp('notes')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Notes_%28iOS_26%29_app_icon.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Notes</span></div>
+        <div onclick="openApp('maps')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH4A3M-UdVZSljMrF4WXX8UHw2zxUoS3fKGIFwZL27Qg&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Maps</span></div>
+        <div onclick="openApp('clock')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.jim-nielsen.com/.netlify/images?url=/icongallery/ios/clock-2025-10-20/1024.png&w=1024" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Clock</span></div>
+        <div onclick="openApp('weather')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://e7.pngegg.com/pngimages/458/593/png-clipart-weather-computer-icons-ios-7-apple-weather-forecast-blue-cloud-thumbnail.png" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Weather</span></div>
+        <div onclick="openApp('mail')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbCp8BT9iIyq86bYlwwJNFCN9v5JDRd-A4RUCPyMKUWQ&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Mail</span></div>
+        <div onclick="openApp('files')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRECvNxFKJgJel_pwpycWAfXDLiG-r_5K5OhIl_A5TFf28hz_XVwfMYE7kl&s=10" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Files</span></div>
+        <div onclick="openApp('settings')" class="flex flex-col items-center space-y-1 cursor-pointer active:scale-90 transition"><div class="ios-app-icon"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-settings-icon-svg-download-png-493162.png?f=webp" class="w-full h-full object-cover"></div><span class="text-[11px] text-white font-medium drop-shadow">Settings</span></div>
     </div>
-    
-    <!-- IMESSAGE - lu udah ada -->
-    <div onclick="openApp('imessage')" class="relative ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
-        <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/IMessage_logo.svg/3840px-IMessage_logo.svg.png" class="w-full h-full object-cover">
+
+    <div class="flex justify-center my-1">
+        <div class="bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full flex items-center space-x-1.5 text-white/90 text-xs shadow-sm">
+            <i class="fa-solid fa-magnifying-glass text-[10px]"></i><span>Search</span>
+        </div>
     </div>
-    
-    <!-- SAFARI -->
-    <div onclick="openApp('safari')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEoxJb34f-BtWYeSut-ZJ-r_NRzW-D-U4GcdY1eX5_rg&s=10" class="w-full h-full object-cover">
-    </div>
-    
-    <!-- CAMERA / MUSIC -->
-    <div onclick="openApp('music')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhY77aDC6ZGpbFFlXo8lDkO99_-fMD8UdjL4VkkAfDOQ&s=10" class="w-full h-full object-cover">
+
+    <div class="ios-dock rounded-[30px] p-2.5 grid grid-cols-4 gap-2 items-center mt-auto">
+        <div onclick="openApp('phone')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition"><img src="https://cdn.iconscout.com/icon/free/png-256/free-apple-phone-icon-svg-download-png-493154.png?f=webp" class="w-full h-full object-cover"></div>
+        <div onclick="openApp('imessage')" class="relative ios-app-icon mx-auto cursor-pointer active:scale-90 transition"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/IMessage_logo.svg/3840px-IMessage_logo.svg.png" class="w-full h-full object-cover"></div>
+        <div onclick="openApp('safari')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEoxJb34f-BtWYeSut-ZJ-r_NRzW-D-U4GcdY1eX5_rg&s=10" class="w-full h-full object-cover"></div>
+        <div onclick="openApp('music')" class="ios-app-icon mx-auto cursor-pointer active:scale-90 transition"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhY77aDC6ZGpbFFlXo8lDkO99_-fMD8UdjL4VkkAfDOQ&s=10" class="w-full h-full object-cover"></div>
     </div>
 </div>
 <div id="app-phone" class="absolute inset-0 z-[30] bg-[#fbfbfd] hidden flex-col page-trans app-close overflow-hidden">
